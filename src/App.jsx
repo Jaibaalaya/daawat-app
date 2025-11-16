@@ -29,7 +29,6 @@ import {
 
 // --- 1. CONFIGURATION ---
 // 🔴 PASTE YOUR KEYS HERE! 🔴
-// REPLACE THIS LINE with the 'firebaseConfig' object from your screenshot
 const firebaseConfig = {
   apiKey: "AIzaSyABu_1mIuwaMx__J2Tjhv_qkv412msIO1k",
   authDomain: "daawat-stock-system.firebaseapp.com",
@@ -239,11 +238,20 @@ function BranchDashboard({ user, branchId, onLogout, toast, confirm }) {
     const [masterInv, setMasterInv] = useState([]);
     const [stockCounts, setStockCounts] = useState({});
     const [tab, setTab] = useState('inventory');
+    const [loading, setLoading] = useState(true);
 
     // 1. Fetch Global Master List
     useEffect(() => {
         const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'master_inventory'), 
-            (s) => setMasterInv(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+            (s) => {
+                setMasterInv(s.docs.map(d => ({ id: d.id, ...d.data() })));
+                setLoading(false);
+            },
+            (err) => {
+                console.error(err);
+                toast("Error loading master list", "error");
+                setLoading(false);
+            });
         return () => unsub();
     }, []);
 
@@ -302,10 +310,10 @@ function BranchDashboard({ user, branchId, onLogout, toast, confirm }) {
             <main className="px-4 py-6">
                 {tab === 'inventory' ? (
                     <>
-                     {masterInv.length === 0 && (
+                     {masterInv.length === 0 && !loading && (
                         <div className={`flex flex-col items-center justify-center py-16 text-center space-y-4 border border-dashed ${THEME.border} rounded-3xl bg-white/5 mb-4`}>
                             <ShieldCheck className="w-12 h-12 text-slate-500" />
-                            <p className="text-slate-400 text-sm px-10">Inventory is empty. Contact Owner to Initialize.</p>
+                            <p className="text-slate-400 text-sm px-10">Inventory initialized by Head Office.</p>
                         </div>
                      )}
                      <InventoryView inventory={inv} onUpdate={updateStock} isOwner={false} />
@@ -474,7 +482,7 @@ function OwnerDashboard({ user, onLogout, toast, confirm }) {
                             <div className="flex gap-2">
                                 <button onClick={() => loadMenu(true)} disabled={loadingMenu} className="px-4 py-2 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-[#D48C4F] gap-2 font-bold text-xs">
                                     {loadingMenu ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                                    Initialize Menu
+                                    Hard Reset
                                 </button>
                                 <button onClick={() => setShowAdd(true)} className={`w-8 h-8 rounded-full bg-[#D48C4F] flex items-center justify-center text-[#050B20] hover:scale-105 transition-transform`}><Plus className="w-5 h-5" /></button>
                             </div>
@@ -626,3 +634,4 @@ function TabButton({ active, onClick, label, icon: Icon, badge }) {
 }
 
 function LoadingScreen() { return (<div className={`min-h-screen ${THEME.bg} flex items-center justify-center`}><Loader2 className={`w-12 h-12 ${THEME.accent} animate-spin`} /></div>); }
+function ErrorScreen({ msg }) { return (<div className={`min-h-screen ${THEME.bg} flex items-center justify-center p-6`}><div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl text-center"><AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" /><p className="text-red-400 font-bold">{msg}</p></div></div>); }
