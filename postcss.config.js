@@ -1,5 +1,4 @@
-// This is the correct, new configuration Vercel needs
-export default {
+module.exports = {
   plugins: {
     '@tailwindcss/postcss': {},
     autoprefixer: {},
